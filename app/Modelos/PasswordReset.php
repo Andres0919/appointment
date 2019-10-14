@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Modelos;
+
+use Illuminate\Database\Eloquent\Model;
+
+class PasswordReset extends Model
+{
+    protected $fillable = [
+        'email', 'token'
+    ];
+}

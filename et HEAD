@@ -1,0 +1,262 @@
+[33mcommit 12a58628964898fcc8f11518162c88622df293c0[m[33m ([m[1;36mHEAD -> [m[1;32mandres[m[33m, [m[1;31morigin/andres[m[33m)[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Fri Apr 12 11:32:24 2019 -0500
+
+    front-end - making TablePaciente
+
+[33mcommit 3970f1078e9074d0f991e56fc10a2e4fe3ff710d[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Thu Apr 11 14:49:18 2019 -0500
+
+    front-end fixed roles in tableuser
+
+[33mcommit 0be58908c3f330106a40bd7f30397921c3ee03e3[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: 099b9f6 72bfbda
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 19:26:58 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end Reparacion de RoleController y creacion del cred de Pacientes
+    
+    See merge request desarrollo_sumi/horus-health!36
+
+[33mcommit 72bfbda55b4a8e30c03822d7b05048b6795c1842[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 14:25:22 2019 -0500
+
+    Back end Reparacion de RoleController y creacion del cred de Pacientes
+
+[33mcommit 099b9f628c4abe72d88e6fe735abb144d3abf126[m
+Merge: 25090dc eb63362
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Thu Apr 11 19:24:26 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    front-end - fixed permisos in roles
+    
+    See merge request desarrollo_sumi/horus-health!35
+
+[33mcommit eb63362267121adfb24cccf63e05b86aed54f6e0[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Thu Apr 11 14:22:46 2019 -0500
+
+    front-end - fixed permisos in roles
+
+[33mcommit 25090dc846af43ad4a8e4566bec41b16fc707b19[m
+Merge: 140d90a f924bbb
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 16:22:46 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end Roles all Permissions CR7
+    
+    See merge request desarrollo_sumi/horus-health!34
+
+[33mcommit f924bbb2cc4360a59e54d59c8e6c109d89f315fd[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 11:21:27 2019 -0500
+
+    Back end Roles all Permissions CR7
+
+[33mcommit 140d90a0428fd9d180475f39a4ea75dfd4259fcd[m
+Merge: 203cf52 32302ed
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Thu Apr 11 15:51:26 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    Andres
+    
+    See merge request desarrollo_sumi/horus-health!33
+
+[33mcommit 32302edd7176deaf4d971cd704228096c91a9a59[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Thu Apr 11 10:48:48 2019 -0500
+
+    front-end gestion roles y permisos
+
+[33mcommit 203cf5272dae49f52193aea90c47be2368c7ddb3[m
+Merge: 885b6a6 b20d20c
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 15:41:24 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end Actualizar Permisos
+    
+    See merge request desarrollo_sumi/horus-health!32
+
+[33mcommit b20d20cd82a11b67da4e25a31055fb43f486e85b[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 10:39:48 2019 -0500
+
+    Back end Actualizar Permisos
+
+[33mcommit ebd9c5075445c8027a5e9fa37a29f81144a3fd35[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Thu Apr 11 09:34:35 2019 -0500
+
+    front-end - global user with vuex
+
+[33mcommit 885b6a62ed743a8b36e906be53ad095ce1366eaf[m
+Merge: eb20f05 4bc607e
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 14:04:34 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end request de datos del usuario cuando esta logueado CR7
+    
+    See merge request desarrollo_sumi/horus-health!31
+
+[33mcommit 4bc607e1b98e9bc461af83264e91513adec86bd9[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Thu Apr 11 08:57:44 2019 -0500
+
+    Back end request de datos del usuario cuando esta logueado CR7
+
+[33mcommit eb20f05a1fccd55bd32574c76ec0655e1cc8a931[m
+Merge: 17a8735 ed1fcae
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Wed Apr 10 20:28:03 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    front end - fixed logout
+    
+    See merge request desarrollo_sumi/horus-health!30
+
+[33mcommit ed1fcae828dc85e4dd6492919b75d0a78e7fcdd3[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Wed Apr 10 15:25:59 2019 -0500
+
+    front end - fixed logout
+
+[33mcommit 17a87353155c959891926a17371d5b649f29f28b[m
+Merge: 611b0e5 2b75cac
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Wed Apr 10 20:06:04 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end Control de excepciones de Roles CR7
+    
+    See merge request desarrollo_sumi/horus-health!29
+
+[33mcommit 2b75cacb3a2a543e3c1a7d6979a65f2bbceaef53[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Wed Apr 10 15:04:41 2019 -0500
+
+    Back end Control de excepciones de Roles CR7
+
+[33mcommit 611b0e54e3aa0b05b8af6f1a4b19ad554c875435[m
+Merge: b7a211f 9aa5a58
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Wed Apr 10 18:12:43 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    front end - changed name methods in tableUser component
+    
+    See merge request desarrollo_sumi/horus-health!28
+
+[33mcommit 9aa5a58b1aa29a7c2cb9073519c616ceb8fbc335[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Wed Apr 10 13:10:56 2019 -0500
+
+    front end - changed name methods in tableUser component
+
+[33mcommit b7a211f3a89de5fb0a3e8121fe9f58d48e6d5eb9[m
+Merge: cf8ff52 0dbb74e
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Wed Apr 10 17:32:55 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    front end - added tooltip in table user
+    
+    See merge request desarrollo_sumi/horus-health!27
+
+[33mcommit 0dbb74eae564da82b6c75a817c544e91a3540d43[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Wed Apr 10 12:28:41 2019 -0500
+
+    front end - added tooltip in table user
+
+[33mcommit cf8ff5259e403470c9b5ee90036e7885fa091baf[m
+Merge: ce5bb9e 41da7eb
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Wed Apr 10 17:13:25 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end Creacion de Permisos y asignacion de Permisos a un Role en su creacion
+    
+    See merge request desarrollo_sumi/horus-health!26
+
+[33mcommit 41da7eba3cedb65460b9e5f5359e58c2bf4676a9[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Wed Apr 10 12:11:25 2019 -0500
+
+    Back end Creacion de Permisos y asignacion de Permisos a un Role en su creacion
+
+[33mcommit ce5bb9ef15bd6c82ee9d431d22daacd10d3945f0[m
+Merge: 8842506 fa43d56
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Wed Apr 10 16:09:27 2019 +0000
+
+    Merge branch 'Calvarezh07' into 'master'
+    
+    Back end Roles and Permissions CR7
+    
+    See merge request desarrollo_sumi/horus-health!25
+
+[33mcommit fa43d56583c3444f5410f2f7d79adef97aa4ce5b[m
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Wed Apr 10 11:06:46 2019 -0500
+
+    Back end Roles and Permissions CR7
+
+[33mcommit 8842506b76da93be4e744b8f307a6ea3168a99e3[m
+Merge: 8aacc11 21ba021
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Tue Apr 9 22:46:24 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    front-end - view crud roles and users
+    
+    See merge request desarrollo_sumi/horus-health!16
+
+[33mcommit 21ba02193a99727a01a0141f7de10bfd384df647[m
+Author: andresposada09 <andres.posada0919@gmail.com>
+Date:   Tue Apr 9 17:44:38 2019 -0500
+
+    front-end - view crud roles and users
+
+[33mcommit 8aacc11c959f0eb233bfdef91f496a08fdfb94cb[m
+Merge: 8e0b40c 2efc506
+Author: Andres Posada <andres.posada0919@gmail.com>
+Date:   Tue Apr 9 17:42:37 2019 +0000
+
+    Merge branch 'andres' into 'master'
+    
+    front end - stand by
+    
+    See merge request desarrollo_sumi/horus-health!15
+
+[33mcommit 8e0b40c69b695dc4adac70546e7b68adad28031a[m
+Merge: 89aae1a 7917040
+Author: dev_sumimedical <sumimedicalweb@gmail.com>
+Date:   Tue Apr 9 17:39:59 2019 +0000
+
+    Merge branch 'CR7' into 'master'
+    
+    Back end Creación de Permisos y sincronizacion a Roles Cr7
+    
+    See merge request desarrollo_sumi/horus-health!14
+
+[33mcommit 2efc5065315763fc0db3
