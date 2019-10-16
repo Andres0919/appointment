@@ -13,7 +13,7 @@
                             Agendar Cita
                         </v-card-title>
                         <v-card-text>
-                            Asignar cita de tipo <b> {{ actividad_selected }} </b> al usuario <b>{{ paciente.Primer_Nom }} {{ paciente.SegundoNom }} {{ paciente.Primer_Ape}} {{ paciente.Segundo_Ape }}</b> identificado con <b>{{ paciente.Tipo_Doc }}</b>  N° <b>{{ paciente.Num_Doc }}</b> el día <b>{{ fecha_selected }}</b> a las <b>{{ data.hora_inicio }}</b> en la sede <b>{{ sede_selected }}</b> con el médico <b>{{ medico_selected }}</b>
+                            Asignar cita de tipo <b> {{ actividad_selected }} </b> al usuario <b>{{ paciente.Primer_Nom }} {{ paciente.SegundoNom }} {{ paciente.Primer_Ape}} {{ paciente.Segundo_Ape }}</b> identificado con <b>{{ paciente.Tipo_Doc }}</b>  N° <b>{{ paciente.Num_Doc }}</b> el día <b>{{ fecha_selected }}</b> a las <b>{{ data.hora_inicio | time}}</b> en la sede <b>{{ sede_selected }}</b>, <b>{{ data.consultorio }}</b> con el médico <b>{{ medico_selected }}</b>
                         </v-card-text>
                         <v-divider></v-divider>
                         <v-card-actions>
@@ -117,7 +117,7 @@
                                 <v-card-actions>
                                 <v-spacer></v-spacer>
                                 <v-btn color="blue darken-1" flat @click="motivoCancelar = false">Cerrar</v-btn>
-                                <v-btn color="blue darken-1" flat @click="cancelarCita()">Enviar</v-btn>
+                                <v-btn v-if="can('Cancelarcita')" color="blue darken-1" flat @click="cancelarCita()">Enviar</v-btn>
                                 </v-card-actions>
                             </v-card>
                         </v-dialog>
@@ -132,13 +132,18 @@
                                                 </v-btn>
                                             </template>
                                             <v-list>
-                                                <v-list-tile @click="confirmarCita()">
+                                                <!--<v-list-tile @click="confirmarCita()">
                                                     <v-list-tile-title>Confirmar<v-icon right color="success">check</v-icon></v-list-tile-title>
-                                                </v-list-tile>
-                                                <v-list-tile @click="openMotivo()">
-                                                    <v-list-tile-title>Cancelar 
+                                                </v-list-tile> -->
+                                                <v-list-tile @click="openMotivo(cita_pendiente)">
+                                                    <v-list-tile-title>Cancelar
                                                         <v-icon right color="error">clear</v-icon>
-                                                        </v-list-tile-title>
+                                                    </v-list-tile-title>
+                                                </v-list-tile>
+                                                <v-list-tile @click="printPDF(cita_pendiente)">
+                                                    <v-list-tile-title>Generar
+                                                        <v-icon right color="success">assignment_turned_in</v-icon>
+                                                    </v-list-tile-title>
                                                 </v-list-tile>
                                             </v-list>
                                         </v-menu>
@@ -198,11 +203,14 @@
                                                         <td class="text-xs-center">{{ props.item.Sede }}</td>
                                                         <td class="text-xs-center">{{ props.item.Nombre_medico }}</td>
                                                         <td class="text-xs-center">
-                                                                <v-btn fab color="success" outline small @click="confirmarCita(props.item)">
+                                                                <!--<v-btn fab color="success" outline small @click="confirmarCita(props.item)">
                                                                     <v-icon color="success">check</v-icon>
-                                                                </v-btn>
+                                                                </v-btn>-->
                                                                 <v-btn fab color="error" outline small @click="openMotivo(props.item)">
                                                                     <v-icon color="error">clear</v-icon>
+                                                                </v-btn>
+                                                                <v-btn fab color="success" outline small @click="printPDF(props.item)" >
+                                                                    <v-icon color="success">assignment_turned_in</v-icon>
                                                                 </v-btn>
                                                         </td>
                                                     </template>
@@ -249,7 +257,7 @@
                         <v-container>
                             <v-layout row wrap>
                                 <v-flex xs12>
-                                    <v-date-picker v-model="fecha" :allowed-dates="diasDisponibles" locale="es" color="primary" ></v-date-picker>
+                                    <v-date-picker v-model="fecha" :allowed-dates="diasDisponibles" :events="diasEvents" :show-current="false" event-color="green lighten-1" locale="es" color="primary" ></v-date-picker>
                                 </v-flex>
                             </v-layout>
                         </v-container>
@@ -301,9 +309,9 @@
                         <v-layout row wrap v-show="paciente.id">
                             <v-layout row wrap>
                                 <v-flex xs6>
-                                    <span class="error--text">Punto de atención : {{ paciente.IPS }}</span><br />
-                                    <span class="error--text">Médico de familia : No tiene</span> 
-                                </v-flex>   
+                                    <span class="error--text">Punto de atención : {{ paciente.NombreIPS }}</span><br />
+                                    <span class="error--text">Médico de familia : {{paciente.Medicofamilia}}</span> 
+                                </v-flex>
                             </v-layout>
                             <v-spacer></v-spacer>
                             <v-btn color="warning" @click="actualizarDatosPersonales()" round outline>Actualizar</v-btn>
@@ -322,13 +330,14 @@
                          xs3
                          px-1
                          > <!-- especialidad -->
-                            <v-select
+                            <v-autocomplete
                              v-model="especialidad_selected"
-                             :items="especialiades"
-                             item-text="name"
-                             item-value="name"
+                             :items="especialidades"
+                             item-text="Nombre"
+                             item-value="id"
                              label="Especialidades"
-                            ></v-select>    
+                             @input="fetchSedes()"
+                            ></v-autocomplete>    
                         </v-flex>
                          <!-- sede -->
                         <v-flex
@@ -337,21 +346,25 @@
                          >
                          <v-select
                           v-model="sede_selected"
-                          :items="sedesDisponible"
+                          :items="sedes"
                           label="Sede"
+                          item-text="Nombre"
+                          item-value="id"
+                          @input="fetchAgendas()"
                          ></v-select>    
                         </v-flex>
                         <v-flex
                          xs3
                          px-1
                          >
-                         <v-select
+                         <v-autocomplete
                           v-model="actividad_selected"
                           :items="actividades"
                           item-text="name"
-                          item-value="name"
+                          item-value="et_id"
                           label="Actividad"
-                          ></v-select>
+                          @input="fetchAgendas()"
+                          ></v-autocomplete>
                         </v-flex>
                         <v-flex
                          xs3
@@ -384,7 +397,7 @@
                                    
                                 ></v-combobox>
                                 </template>
-                                <v-date-picker color="primary" :allowed-dates="diasDisponibles" locale="es" v-model="data.fecha_solicitada" @input="agendaSolicitada()"></v-date-picker>
+                                <v-date-picker color="primary" locale="es" v-model="data.fecha_solicitada" :min="today" :show-current="false" @input="agendaSolicitada()"></v-date-picker>
                             </v-menu>
                         </v-flex> 
                     </v-layout>
@@ -396,9 +409,11 @@
                              item-key="name"
                              class="elevation-1"
                              color="primary"
+                             :rows-per-page-items="[20,30,50]"
+                             rows-per-page-text="Citas por página"
                              >
                                 <template v-slot:items="props">
-                                    <td class="text-xs-center">{{ props.item.hora_inicio }}</td>
+                                    <td class="text-xs-center">{{ props.item.hora_inicio | time }}</td>
                                     <td class="text-xs-center">{{ props.item.consultorio }}</td>
                                     <td class="text-xs-center">
                                         <v-btn
@@ -433,6 +448,8 @@
             return {
                 motivoCancelar: false,
                 dialog: false,
+                message: '',
+                citas: {},
                 todaspendientesmodal: false,
                 headerCitaPendientes: [
                     { text: 'Especialidad', align: 'center', sortable: false, value: 'Especialidad' },
@@ -448,6 +465,7 @@
                     { text: 'Consultorio', sortable: false, align: 'center', value: 'consultorio' },
                     { text: '', align: 'center', value: '' },
                 ],
+                today: moment().format('YYYY-MM-DD'),
                 agendas: [],
                 cedula_paciente: '',
                 medico_selected: null,
@@ -498,21 +516,30 @@
                     Especialidad: '',
                     Tipo_agenda: '',
                 },
+                cancelarcita: {},
                 allcita_pendiente: [],
+                especialidades: [],
+                sedes:[]
             }
         },
         filters:{
             fecha_cita_pendiente(fecha){
                 return moment(fecha).format('dddd, D MMMM, YYYY');
+            },
+            time(date){
+                return moment(date).format('HH:mm:ss');
             }
         },
         computed:{
             ...mapGetters(['can']),
             agendaDisponible(){
+                let citasEnable = [];
                 let citas = [];
                 for (let i = 0; i < this.agendas.length; i++) {
+                    let citas = [];
                     let medico = `${this.agendas[i].nombreMedico} ${this.agendas[i].apellidoMedico}`
-                    if (this.agendas[i].Sede === this.sede_selected && this.agendas[i].Especialidad == this.especialidad_selected && this.agendas[i].tipoActividad === this.actividad_selected && medico === this.medico_selected && this.agendas[i].fecha == this.fecha ) {
+                    if (medico === this.medico_selected && 
+                        this.agendas[i].fecha == this.fecha ) {
                         citas = this.agendas[i].citas.map(cita =>  {
                             return {
                                 id: cita.id,
@@ -520,9 +547,11 @@
                                 consultorio: this.agendas[i].nombreConsultorio
                             }
                         });
+                        citasEnable = citasEnable.concat(citas);
                     }
                 }
-                return citas
+
+                return citasEnable.sort((a, b) =>  moment(a.hora_inicio) - moment(b.hora_inicio));
             },
             sedesDisponible(){
                 return this.agendas.filter((agenda) =>{
@@ -531,34 +560,45 @@
                 }).map((agenda) => agenda.Sede);
             },
             medicosSede(){
-                return this.agendas.filter((agenda) =>{
-                    if(agenda.Especialidad == this.especialidad_selected && agenda.tipoActividad == this.actividad_selected && agenda.Sede == this.sede_selected ) return true;
-                    return false;
-                }).map((agenda) => `${agenda.nombreMedico} ${agenda.apellidoMedico}`)
+                return this.agendas.map((agenda) => `${agenda.nombreMedico} ${agenda.apellidoMedico}`)
             },
-            especialiades(){
+            especialiadesq(){
                 return this.agendas.map(agenda => agenda.Especialidad )
             },
             actividades(){
-                return this.agendas.filter((agenda) => {
-                    if(agenda.Especialidad == this.especialidad_selected && agenda.Sede == this.sede_selected)  return true
-                    return false;
-                }).map((agenda) => agenda.tipoActividad);
+                return this.especialidades.filter(e => this.especialidad_selected === e.id && this.sede_selected == e.sede) 
             },
         },
         mounted(){
             moment.locale('es');
-            this.fetchAgendas();
         },
         methods: {
+            fetchEspecialidades(){
+                axios.get(`/api/agenda/agendaDisponible/especialidades`)
+                    .then((res) => {
+                        this.especialidades = res.data
+                    });
+            },
+            fetchSedes(){
+                axios.post(`/api/agenda/agendaDisponible/sedes`,{ especialidad: this.especialidad_selected })
+                    .then((res) => {
+                        this.sedes = res.data
+                    });
+            },
             fetchAgendas(){
                 this.datePicker = false;
-                axios.post('/api/agenda/agendaDisponible', { fecha: this.fecha })
-                    .then(res => this.agendas = res.data);
+                if(this.especialidad_selected && this.sede_selected && this.actividad_selected){
+                    axios.post('/api/agenda/agendaDisponible', { fecha: this.fecha, sede: this.sede_selected, tipo_agenda: this.actividad_selected })
+                    .then(res => {
+                        this.agendas = res.data
+                    });
+                }
+                
             },
             search_paciente(){
                 if(!this.cedula_paciente) return;
 
+                this.fetchEspecialidades();
                 axios.get(`/api/paciente/showEnabled/${this.cedula_paciente}`)
                     .then((res) => {
                         if(res.data.paciente) {
@@ -574,7 +614,6 @@
                     Paciente_id
                 })
                 .then((res) => {
-                  // console.log(res);
                     if(res.data[0]){
                         this.cita_pendiente = res.data[0];
                         this.allcita_pendiente = res.data;
@@ -612,8 +651,10 @@
                             });
                         })
             },
-            openMotivo(){
+            openMotivo(cita = undefined){
+                this.cancelarcita = cita;
                 this.cancelar = {
+                    id: cita.id,
                     motivo: '',
                     Paciente_id: null,
                     Detallecita_id:null,
@@ -622,11 +663,11 @@
                 
             },
             cancelarCita(){
-              // console.log('cancelar',this.cita_pendiente)
                 this.cancelar.Paciente_id = this.paciente.id;
-                this.cancelar.Detallecita_id = this.cita_pendiente.detallecita_id;
+                
+                
                 this.motivoCancelar = false;
-                axios.put(`/api/cita/cancelar/${this.cita_pendiente.id}`, this.cancelar)
+                axios.put(`/api/cita/cancelar/${this.cancelar.id}`, this.cancelar)
                         .then((res) => {
                             swal({
                                 title: "¡Cita Cancelada!",
@@ -635,6 +676,7 @@
                                 icon: "success",
                                 buttons: false
                             });
+                            this.cancelarcita = {};
                             this.citaPendiente(this.paciente.id);
                         })
             },
@@ -650,7 +692,6 @@
                         if(confirm){
                             axios.put(`/api/cita/confirmar/${this.cita.id}`, this.confirmar)
                                 .then((res) => {
-                                  // console.log('confirmado',res.data);
                                     swal({
                                         title: "¡Cita confirmada!",
                                         text: `${res.data.message}`,
@@ -676,7 +717,6 @@
                         if(confirm){
                             axios.put(`/api/cita/confirmar/${this.cita_pendiente.id}`, this.confirmar)
                                 .then((res) => {
-                                  // console.log('confirmado',res.data);
                                     swal({
                                         title: "¡Cita confirmada!",
                                         text: `${res.data.message}`,
@@ -695,8 +735,10 @@
                         .then((res) => {
                             this.dialog = false;
                             //this.clearFields();
+                            // this.printPDF();
                             this.fetchAgendas();
-                          // console.log('res', res)
+
+                            this.citaPendiente(this.paciente.id);
                             swal({
                                 title: "¡Cita Agendada!",
                                 text: `${res.data.message}`,
@@ -704,6 +746,7 @@
                                 icon: "success",
                                 buttons: false
                             });
+
                         })
                         .catch((err) => this.showMessage(err.response.data.message))
             },
@@ -765,14 +808,87 @@
             },
             diasDisponibles(val){
                 let dia = null;
-                this.agendas.forEach((agenda) =>{
-                    if(agenda.Especialidad == this.especialidad_selected && agenda.tipoActividad == this.actividad_selected && agenda.Sede == this.sede_selected && agenda.fecha == val ){
+                this.agendas.forEach((agenda) => {
+                    if(agenda.fecha == val ){
                         dia = val;
-
                     }
                 })
                 if(dia) return dia
+            },
+            diasEvents(val){
+                let dia = null;
+                let many = false;
+                this.agendas.forEach((agenda) =>{
+                    if(agenda.fecha == val ){
+                        dia = val;
 
+                        let medico = `${agenda.nombreMedico} ${agenda.apellidoMedico}`
+                        if(medico === this.medico_selected){
+                            if(agenda.citas[0].Hora_Inicio.substring(0,10) === dia) many = true;
+                        }
+
+                    }
+                })
+                
+                if(dia) {
+                    if(many) return ['green lighten-1','red']
+                    else return true
+                }
+
+                return false
+            },
+            printPDF(cita){
+
+
+                var pdf = {};
+
+                pdf = this.getPDFCitas(cita);
+
+                axios
+                    .post("/api/pdf/print-pdf", pdf, {
+                    responseType: "arraybuffer"
+                    })
+                    .then(res => {
+                    let blob = new Blob([res.data], { type: "application/pdf" });
+                    let link = document.createElement("a");
+                    link.href = window.URL.createObjectURL(blob);
+                    window.open(link.href,"_blank");
+                });
+            },
+            getPDFCitas(cita) {
+
+                if (!this.paciente.Primer_Nom)
+                    this.paciente.Primer_Nom = '';
+                
+                if (!this.paciente.SegundoNom) 
+                    this.paciente.SegundoNom = '';
+
+                if (!this.paciente.Primer_Ape)
+                    this.paciente.Primer_Ape = ';'
+
+                if (!this.paciente.Segundo_Ape) 
+                    this.paciente.Segundo_Ape = '';
+
+                this.message = `Asignar cita de tipo ${ cita.Tipo_agenda } al usuario ${ this.paciente.Primer_Nom } ${ this.paciente.SegundoNom } ${ this.paciente.Primer_Ape } ${ this.paciente.Segundo_Ape } identificado con ${ this.paciente.Tipo_Doc } N° ${ this.paciente.Num_Doc } el día ${ cita.Fecha } a las ${ moment(cita.Hora_Inicio).format('HH:mm:ss') } en la sede ${ cita.Sede }, ${ cita.Consultorio } con el médico ${ cita.Nombre_medico } ${ cita.Apellido_medico }`;
+                return (this.citas = {
+                    Primer_Nom: this.paciente.Primer_Nom,
+                    Segundo_Nom: this.paciente.SegundoNom,
+                    Primer_Ape: this.paciente.Primer_Ape,
+                    Segundo_Ape: this.paciente.Segundo_Ape,
+                    Tipo_Doc: this.paciente.Tipo_Doc,
+                    Num_Doc: this.paciente.Num_Doc,
+                    Edad_Cumplida: this.paciente.Edad_Cumplida,
+                    Sexo: this.paciente.Sexo,
+                    IPS: this.paciente.IPS,
+                    Direccion_Residencia: this.paciente.Direccion_Residencia,
+                    Correo: this.paciente.Correo,
+                    Telefono: this.paciente.Telefono,
+                    Tipo_Afiliado: this.paciente.Tipo_Afiliado,
+                    Estado_Afiliado: this.paciente.Estado_Afiliado,
+                    Tipo_cita: cita.Tipo_agenda,
+                    type: "cita",
+                    observaciones: this.message,
+                });
             }
         }
     }

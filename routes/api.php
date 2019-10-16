@@ -71,10 +71,13 @@ require __DIR__ . '/historiaclinica/antecedente.php';
 require __DIR__ . '/historiaclinica/estilovida.php';
 require __DIR__ . '/historiaclinica/gineco.php';
 require __DIR__ . '/historiaclinica/parentesco.php';
+require __DIR__ . '/historiaclinica/labgestionriesgo.php';
+require __DIR__ . '/historiaclinica/colegios.php';
+require __DIR__ . '/historiaclinica/incapacidad.php';
+require __DIR__ . '/historiaclinica/gethistoria.php';
+require __DIR__ . '/historiaclinica/imagenologia.php';
 
 //Autorizaciones
 require __DIR__ . '/autorizaciones/autorizacion.php';
 require __DIR__ . '/pdf/pdf.php';
-
-
-
+require __DIR__ . '/files/file.php';

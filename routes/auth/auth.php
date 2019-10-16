@@ -1,6 +1,6 @@
 <?php
 
-Route::group(['prefix' => 'auth'], function () {
+Route::group(['prefix' => 'auth', 'throttle:60,1'], function () {
     Route::post('login', 'Auth\AuthController@login');
     Route::post('signup', 'Auth\AuthController@signup');
   

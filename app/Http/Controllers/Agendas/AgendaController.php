@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Agendas;
 
 use App\User;
 use App\Modelos\Cita;
+use App\Modelos\Sede;
+use App\Modelos\Especialidade;
 use App\Modelos\Agenda;
+use App\Modelos\citapaciente;
 use App\Modelos\Consultorio;
 use App\Modelos\Tipoagenda;
 use App\Modelos\agendauser;
@@ -22,8 +25,36 @@ class AgendaController extends Controller
         return response()->json($agenda, 200 );
     }
 
+    public function agendaEspecialidad(){
+        $especialidades = Especialidade::select(['et.id as et_id','especialidades.*','ta.name','c.Sede_id as sede'])
+                                        ->join('especialidade_tipoagenda as et','et.Especialidad_id','especialidades.id')
+                                        ->join('tipo_agendas as ta','et.Tipoagenda_id','ta.id')
+                                        ->join('agendas as a','a.Especialidad_id','et.id')
+                                        ->join('consultorios as c','a.Consultorio_id','c.id')
+                                        ->where('especialidades.Estado_id',1)
+                                        ->where('ta.Estado_id',1)
+                                        ->where('a.Fecha', '>=' , date('Y-m-d'))
+                                        ->distinct()
+                                        ->get();
+        return response()->json($especialidades, 200);
+    }
+
+    public function agendaSede(Request $request){
+        $sedes = Sede::select(['sedes.*'])
+                        ->join('consultorios as c','c.Sede_id','sedes.id')
+                        ->join('agendas as a','a.Consultorio_id','c.id')
+                        ->join('especialidade_tipoagenda as et','a.Especialidad_id','et.id')
+                        ->where('sedes.Estado_id',1)
+                        ->where('et.Especialidad_id',$request->especialidad)
+                        ->where('a.Fecha', '>=' , date('Y-m-d'))
+                        ->distinct()
+                        ->get();
+
+        return response()->json($sedes, 200);
+    }
+
     public function agendaDisponible(Request $request){
-        $agendas = Agenda::select(['agendas.id', 's.Nombre as Sede', 'a.Nombre as nombreConsultorio', 'c.Nombre as Especialidad', 'd.name as tipoActividad', 'u.name as nombreMedico', 'u.apellido as apellidoMedico', 
+        $agendas = Agenda::select(['agendas.id', 's.id as Sede', 'a.Nombre as nombreConsultorio', 'c.Nombre as Especialidad', 'd.name as tipoActividad', 'u.name as nombreMedico', 'u.apellido as apellidoMedico', 
                                     'agendas.fecha', 'agendas.Hora_Inicio', 'agendas.Hora_Final'])
                         ->join('consultorios as a','agendas.Consultorio_id','a.id')
                         ->join('sedes as s','a.Sede_id','s.id')
@@ -39,8 +70,10 @@ class AgendaController extends Controller
                         ->where('agendas.Fecha', '>=' , date('Y-m-d'))
                         ->whereHas('citas',function ($query){
                             $query->where('Estado_id', 3);
-                        })
-                        ->where('agendas.Estado_id',3)
+                        }) 
+                        ->where('agendas.Estado_id',3) 
+                        ->where('s.id',$request->sede)
+                        ->where('b.id',$request->tipo_agenda)
                         ->get();
         return response()->json($agendas, 200);
     }
@@ -48,13 +81,18 @@ class AgendaController extends Controller
     public function agendamedicos(Request $request){
         $agendas = Agenda::select(['agendas.id', 'agendas.Hora_Inicio', 'agendas.Hora_Final','sedes.Nombre as Sede','consultorios.Nombre as consultorio','d.name as tAgenda','users.name as medico','agendas.Fecha','agendas.Estado_id','b.Duracion'])
                         ->join('consultorios','agendas.Consultorio_id','consultorios.id')
-                        ->join('sedes','consultorios.Sede_id','sedes.id')   
+                        ->join('sedes','consultorios.Sede_id','sedes.id')
                         ->join('especialidade_tipoagenda as b','agendas.Especialidad_id','b.id')
                         ->join('especialidades as c', 'b.Especialidad_id', 'c.id')
                         ->join('tipo_agendas as d', 'b.Tipoagenda_id', 'd.id')
                         ->join('agendausers as au', 'au.Agenda_id', 'agendas.id')
                         ->join('users','au.Medico_id','users.id')
-                        ->with(['citas' => function($query) { $query->select('id','Agenda_id','Hora_Inicio','Estado_id'); }])
+                        ->with(['citas' => function($query) { 
+                            $query->select('citas.id','citas.Agenda_id','citas.Hora_Inicio','citas.Estado_id','p.Primer_Nom','p.SegundoNom','p.Primer_Ape','p.Segundo_Ape','p.Tipo_Doc','p.Num_Doc','cp.Estado_id as estado_citapaciente')
+                                    ->leftJoin('cita_paciente as cp','cp.Cita_id','citas.id')
+                                    ->leftJoin('pacientes as p','cp.Paciente_id','p.id')
+                                    ->whereIn('citas.Estado_id',[3,4,7,8,9,10,12]);
+                        }])
                         ->where('au.Medico_id',$request->medico_id)
                         ->whereIn('agendas.Estado_id',[3,10])
                         ->get();
@@ -228,14 +266,24 @@ class AgendaController extends Controller
     public function cancelarAgenda(Agenda $agenda){
         $agenda->update(['Estado_id' => 6]);
 
+        Cita::where('Agenda_id', $agenda->id)
+          ->update(['Estado_id' => 6]);
+
+        $citas = Cita::where('Agenda_id', $agenda->id)->get();
+        foreach ($citas as $cita) {
+            
+            citapaciente::where('Cita_id', $cita['id'])
+                        ->update(['Estado_id' => 6]);
+        }
+
         return response()->json([
-            'message' => 'Agenda cancelada!'
+            'message' => 'Agenda cancelada!',
         ], 200);
     }
 
     public function bloquearAgenda(Agenda $agenda){
         $estado = ($agenda->Estado_id == 3)? 10 : 3; 
-        $msg = ($agenda->Estado_id == 3)? 'Agenda Bloqueada' : 'Agenda Desbloquiada'; 
+        $msg = ($agenda->Estado_id == 3)? 'Agenda Bloqueada' : 'Agenda Desbloqueada'; 
         $agenda->update(['Estado_id' => $estado]);
 
         

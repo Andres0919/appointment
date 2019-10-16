@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Citas;
 
 use App\User;
+use Carbon\Carbon;
 use App\Modelos\Cita;
 use App\Modelos\Agenda;
 use App\Modelos\Estado;
@@ -10,9 +11,11 @@ use App\Modelos\Paciente;
 use App\Modelos\Detallecita;
 use App\Modelos\citapaciente;
 use App\Modelos\Especialidade;
+use App\Modelos\TipoAgenda;
 use App\Modelos\Especialidadtipoagenda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 
@@ -26,7 +29,7 @@ class CitaController extends Controller
 
     public function store(Request $request)
     {
-        $validate = Validator::make($request->all(),[
+        $validate = Validator::make($request->all(), [
             'Hora_Inicio' => 'string',
             'Hora_Final' => 'string',
         ]);
@@ -57,62 +60,63 @@ class CitaController extends Controller
 
     public function update(Request $request, Cita $cita)
     {
-         $cita->update($request->all());
+        $cita->update($request->all());
         return response()->json([
             'message' => 'Cita Actualizada con Exito!'
         ], 200);
     }
 
-    public function asignarcita(Request $request, Cita $cita){
-
+    public function asignarcita(Request $request, Cita $cita)
+    {
         $agenda = Agenda::select(['c.*','agendas.Fecha as fecha','agendas.Especialidad_id as especilidad' ])
-                ->join('consultorios as c','agendas.Consultorio_id','c.id')
-                ->join('citas as ci','ci.Agenda_id','agendas.id')
+                ->join('consultorios as c', 'agendas.Consultorio_id', 'c.id')
+                ->join('citas as ci', 'ci.Agenda_id', 'agendas.id')
                 ->where('ci.id', $cita->id)
                 ->where('ci.Estado_id', 3)
                 ->first();
 
-        if(isset($agenda)){
-            if($agenda->Cantidad > $cita->Cantidad){
+        if (isset($agenda)) {
+            if ($agenda->Cantidad > $cita->Cantidad) {
                 $hora_inicio = $cita->Hora_Inicio;
                 $hora_final = $cita->Hora_Final;
-                $disponibildad = Paciente::join('cita_paciente as cp','cp.Paciente_id','pacientes.id')
-                                        ->join('citas as c','cp.Cita_id','c.id')
-                                        ->join('agendas as a','c.Agenda_id','a.id')
+                $disponibildad = Paciente::join('cita_paciente as cp', 'cp.Paciente_id', 'pacientes.id')
+                                        ->join('citas as c', 'cp.Cita_id', 'c.id')
+                                        ->join('agendas as a', 'c.Agenda_id', 'a.id')
                                         ->where('a.Fecha', $agenda->fecha)
-                                        ->where('pacientes.id',$request->Paciente_id)
-                                        ->where(function ($query) use ($hora_inicio,$hora_final){
-                                            $query->where('c.Hora_Inicio','>',$hora_inicio)
-                                                ->where('c.Hora_Inicio','<',$hora_final);
+                                        ->where(function ($query) use ($hora_inicio,$hora_final) {
+                                            $query->where('c.Hora_Inicio', '>', $hora_inicio)
+                                                ->where('c.Hora_Inicio', '<', $hora_final)
+                                                ->orWhere(function ($query) use ($hora_inicio,$hora_final) {
+                                                    $query->where('c.Hora_Final', '>', $hora_inicio)
+                                                            ->where('c.Hora_Final', '<', $hora_final);
+                                                });
                                         })
-                                        ->orWhere(function ($query) use ($hora_inicio,$hora_final){
-                                            $query->where('c.Hora_Final','>',$hora_inicio)
-                                                ->where('c.Hora_Final','<',$hora_final);
-                                        })
+                                        ->where('pacientes.id', $request->Paciente_id)
                                         ->first();
 
-                $disponibildad2 = Paciente::join('cita_paciente as cp','cp.Paciente_id','pacientes.id')
-                                        ->join('citas as c','cp.Cita_id','c.id')
-                                        ->join('agendas as a','c.Agenda_id','a.id')
+                $disponibildad2 = Paciente::join('cita_paciente as cp', 'cp.Paciente_id', 'pacientes.id')
+                                        ->join('citas as c', 'cp.Cita_id', 'c.id')
+                                        ->join('agendas as a', 'c.Agenda_id', 'a.id')
                                         ->where('a.Fecha', $agenda->fecha)
-                                        ->where('pacientes.id',$request->Paciente_id)
-                                        ->where('c.Hora_Inicio','=',$hora_inicio)
+                                        ->where('pacientes.id', $request->Paciente_id)
+                                        ->where('c.Hora_Inicio', '=', $hora_inicio)
                                         ->first();
-                if(isset($disponibildad) || isset($disponibildad2)){
-                    return response()->json([
-                        'message' => '¡El paciente tiene cita para ese día en se rango de hora!'
-                    ], 422);
-                }
+                
+                // if (isset($disponibildad) || isset($disponibildad2)) {
+                //     return response()->json([
+                //         'message' => '¡El paciente tiene cita para ese día en se rango de hora!'
+                //     ], 422);
+                // }
                     
-                $disponibildad3 = Paciente::join('cita_paciente as cp','cp.Paciente_id','pacientes.id')
-                                    ->join('citas as c','cp.Cita_id','c.id')
-                                    ->join('agendas as a','c.Agenda_id','a.id')
-                                    ->where('pacientes.id',$request->Paciente_id)
-                                    ->where('a.Especialidad_id',$agenda->especilidad)
-                                    ->whereIn('cp.Estado_id',[4,7,11])
+                $disponibildad3 = Paciente::join('cita_paciente as cp', 'cp.Paciente_id', 'pacientes.id')
+                                    ->join('citas as c', 'cp.Cita_id', 'c.id')
+                                    ->join('agendas as a', 'c.Agenda_id', 'a.id')
+                                    ->where('pacientes.id', $request->Paciente_id)
+                                    ->where('a.Especialidad_id', $agenda->especilidad)
+                                    ->whereIn('cp.Estado_id', [4,7,11])
                                     ->first();
 
-                if(isset($disponibildad3)){
+                if (isset($disponibildad3)) {
                     return response()->json([
                         'message' => '¡El paciente ya tiene una cita del mismo tipo!'
                     ], 422);
@@ -123,35 +127,30 @@ class CitaController extends Controller
                                     ->where('especialidade_tipoagenda.id', $agenda->especilidad)
                                     ->first();
                 
-                if(isset($especialidades)){
-
-                    $year = date('y');
+                if (isset($especialidades)) {
+                    $year = date('Y');
 
                     $pacientes = Paciente::select(['pacientes.*'])
-                                        ->join('cita_paciente as cp','pacientes.id','cp.id')
+                                        ->join('cita_paciente as cp', 'pacientes.id', 'cp.id')
                                         ->where('cp.Paciente_id', $request->Paciente_id)
-                                        ->where('cp.Cita_id', $cita->id)
                                         ->where('cp.Fecha_solicita', 'LIKE', $year.'%')
                                         ->where('cp.Estado_id', '<>', 6)
                                         ->first();
-
-                    
 
                     $pivote = [
                         "Estado_id" => "4",
                         "Usuario_id" => auth()->id(),
                         "Fecha_solicita" => $request->fecha_solicitada
                     ];
-
             
-                    $cita->paciente()->attach($request->Paciente_id,$pivote);
+                    $cita->paciente()->attach($request->Paciente_id, $pivote);
                     $cita->update([
                         'Cantidad' => $cita->Cantidad + 1,
                     ]);
                     
                     
                     $cita_paciente = Cita::select(['cp.*'])
-                                    ->join('cita_paciente as cp','cp.Cita_id','citas.id')
+                                    ->join('cita_paciente as cp', 'cp.Cita_id', 'citas.id')
                                     ->where('cp.Cita_id', $cita->id)
                                     ->where('cp.Paciente_id', $request->Paciente_id)
                                     ->first();
@@ -161,20 +160,18 @@ class CitaController extends Controller
                         "Usuario_id" => auth()->id(),
                         "Estado_id" => 4
                     ]);
-                    if($agenda->Cantidad == $cita->Cantidad){
+                    if ($agenda->Cantidad == $cita->Cantidad) {
                         $cita->update([
                             'Estado_id' => 4
                         ]);
                     }
                 }
-
-            }else{
+            } else {
                 return response()->json([
                     'message' => '¡La cita no tiene cupo!'
                 ], 422);
             }
-
-        }else{
+        } else {
             return response()->json([
                 'message' => '¡No está disponible esta cita!'
             ], 422);
@@ -186,9 +183,10 @@ class CitaController extends Controller
         ], 200);
     }
 
-    public function available(Request $request, Cita $cita){
+    public function available(Request $request, Cita $cita)
+    {
         $cita->update($request->all());
-       $pivote =[
+        $pivote =[
                     'Actualizado_por' => auth()->id()
                 ];
         $cita->estados()->attach($request->Estado, $pivote);
@@ -196,49 +194,57 @@ class CitaController extends Controller
         if ($request->Estado == 4) {
             return response()->json([
                 'message' => 'La cita esta Pendiente por confirmar'
-            ],200);
-        }elseif ($request->Estado == 6) {
+            ], 200);
+        } elseif ($request->Estado == 6) {
             return response()->json([
                'message' => 'La cita fue Cancelada por el paciente'
-            ],200);
-        }elseif ($request->Estado == 8) {
+            ], 200);
+        } elseif ($request->Estado == 8) {
             return response()->json([
                 'message' => 'La cita esta en Curso'
-            ],200);
-        }elseif ($request->Estado == 9) {
-           return response()->json([
+            ], 200);
+        } elseif ($request->Estado == 9) {
+            return response()->json([
                'message' => 'La cita fue Atendida con Exito'
-           ],200);
-       }elseif ($request->Estado == 10) {
-           return response()->json([
+           ], 200);
+        } elseif ($request->Estado == 10) {
+            return response()->json([
                'message' => 'La cita fue Bloqueado con Exito'
-           ],200);
-       }elseif ($request->Estado == 11) {
-           return response()->json([
+           ], 200);
+        } elseif ($request->Estado == 11) {
+            return response()->json([
                'message' => 'La cita fue Reasignado con Exito'
-           ],200);
-       }elseif ($request->Estado == 12) {
-           return response()->json([
+           ], 200);
+        } elseif ($request->Estado == 12) {
+            return response()->json([
                'message' => 'La cita fue cancelada por Inasistencia con Exito'
-           ],200);
-       }
+           ], 200);
+        }
         return response()->json([
             'message' => 'Cita Actualizada con Exito!'
         ], 200);
     }
 
-    public function enabled(){
+    public function enabled()
+    {
         $citas = Cita::where('Estado', 3)->get();
         return response()->json($citas, 200);
     }
 
-    public function cancelar(Cita $cita, Request $request){
+    public function cancelar(Cita $cita, Request $request)
+    {
+        $cantidad = intval($cita->Cantidad) - 1;
+        if($cantidad < 0){
+            $cantidad = 0;
+        } 
+
         $cita->update([
-            'Cantidad' => $cita->Cantidad - 1,
+            'Cantidad' => $cantidad,
             'Estado_id' => 3
         ]);
         $cita_paciente = citapaciente::where('Cita_id', $cita->id)
                         ->where('Paciente_id', $request->Paciente_id)
+                        ->whereIn('Estado_id', [4,7])
                         ->first();
 
         $cita_paciente->update([
@@ -256,9 +262,10 @@ class CitaController extends Controller
         ], 200);
     }
 
-    public function bloquearCita(Cita $cita){
-        $estado = ($cita->Estado_id == 3)? 10 : 3; 
-        $msg = ($cita->Estado_id == 3)? 'Cita Bloqueada' : 'Cita Desbloquiada'; 
+    public function bloquearCita(Cita $cita)
+    {
+        $estado = ($cita->Estado_id == 3)? 10 : 3;
+        $msg = ($cita->Estado_id == 3)? 'Cita Bloqueada' : 'Cita Desbloquiada';
         $cita->update(['Estado_id' => $estado]);
         
         return response()->json([
@@ -266,11 +273,13 @@ class CitaController extends Controller
         ], 200);
     }
 
-    public function confirmar(Cita $cita, Request $request){
+    public function confirmar(Cita $cita, Request $request)
+    {
         $cita->update(["Estado_id" => 7]);
 
         $cita_paciente = citapaciente::where('Cita_id', $cita->id)
                             ->where('Paciente_id', $request->Paciente_id)
+                            ->whereIn('Estado_id', [4,7])
                             ->first();
 
         $cita_paciente->update([
@@ -288,62 +297,67 @@ class CitaController extends Controller
         ], 200);
     }
 
-    public function citaspendientesPaciente(Request $request){
-       $citaspendientes = Cita::select(['citas.id as id','citas.Hora_Inicio','c.Nombre as Consultorio', 's.Nombre as Sede', 'u.name as Nombre_medico','u.apellido as Apellido_medico','e.Nombre as Especialidad','ta.name as Tipo_agenda','a.Fecha'])
-                                ->join('cita_paciente as cp','cp.Cita_id','citas.id')
-                                ->join('pacientes as p','cp.Paciente_id','p.id')
-                                ->join('agendas as a','citas.Agenda_id','a.id')
-                                ->join('especialidade_tipoagenda as et','a.Especialidad_id','et.id')
-                                ->join('especialidades as e','et.Especialidad_id','e.id')
-                                ->join('tipo_agendas as ta','et.Tipoagenda_id','ta.id')
-                                ->join('consultorios as c','a.Consultorio_id','c.id')
-                                ->join('sedes as s','c.Sede_id','s.id')
+    public function citaspendientesPaciente(Request $request)
+    {
+        $citaspendientes = Cita::select(['citas.id as id','citas.Hora_Inicio','c.Nombre as Consultorio', 's.Nombre as Sede', 'u.name as Nombre_medico','u.apellido as Apellido_medico','e.Nombre as Especialidad','ta.name as Tipo_agenda','a.Fecha'])
+                                ->join('cita_paciente as cp', 'cp.Cita_id', 'citas.id')
+                                ->join('pacientes as p', 'cp.Paciente_id', 'p.id')
+                                ->join('agendas as a', 'citas.Agenda_id', 'a.id')
+                                ->join('especialidade_tipoagenda as et', 'a.Especialidad_id', 'et.id')
+                                ->join('especialidades as e', 'et.Especialidad_id', 'e.id')
+                                ->join('tipo_agendas as ta', 'et.Tipoagenda_id', 'ta.id')
+                                ->join('consultorios as c', 'a.Consultorio_id', 'c.id')
+                                ->join('sedes as s', 'c.Sede_id', 's.id')
                                 ->join('agendausers as au', 'au.Agenda_id', 'a.id')
-                                ->join('users as u','au.Medico_id','u.id')
+                                ->join('users as u', 'au.Medico_id', 'u.id')
                                 ->whereIn('cp.Estado_id', [4,7])
-                                ->where('p.id',$request->Paciente_id)
+                                ->where('p.id', $request->Paciente_id)
                                 ->get();
-        return response()->json($citaspendientes,200);
+        return response()->json($citaspendientes, 200);
     }
 
-    public function cronogramaHoyMedico(){
-        $citaspendientes = Cita::select(['citas.id as id','p.id as paciente_id', 'cp.id as cita_paciente_id','citas.Hora_Inicio', 'e.Nombre as Especialidad','ta.name as Tipo_agenda','a.Fecha','citas.Estado_id','p.Primer_Nom','p.SegundoNom','p.Primer_Ape','p.Segundo_Ape','p.Tipo_Doc','p.Num_Doc','p.Edad_Cumplida'])
-                                 ->leftJoin('cita_paciente as cp','cp.Cita_id','citas.id')
-                                 ->leftJoin('pacientes as p','cp.Paciente_id','p.id')
-                                 ->join('agendas as a','citas.Agenda_id','a.id')
-                                 ->join('especialidade_tipoagenda as et','a.Especialidad_id','et.id')
-                                 ->join('especialidades as e','et.Especialidad_id','e.id')
-                                 ->join('tipo_agendas as ta','et.Tipoagenda_id','ta.id')
-                                 ->join('consultorios as c','a.Consultorio_id','c.id')
-                                 ->join('sedes as s','c.Sede_id','s.id')
+    public function cronogramaHoyMedico()
+    {
+        $citaspendientes = Cita::select(['citas.id as id','p.id as paciente_id', 'cp.id as cita_paciente_id', 'cp.Estado_id as CP_Estado_id', 'citas.Hora_Inicio', 'e.Nombre as Especialidad','ta.name as Tipo_agenda','a.Fecha','citas.Estado_id','p.Primer_Nom','p.SegundoNom','p.Primer_Ape','p.Segundo_Ape','p.Tipo_Doc','p.Num_Doc','p.Edad_Cumplida','es.Nombre as Estado'])
+                                 ->join('cita_paciente as cp', 'cp.Cita_id', 'citas.id')
+                                 ->join('pacientes as p', 'cp.Paciente_id', 'p.id')
+                                 ->join('agendas as a', 'citas.Agenda_id', 'a.id')
+                                 ->join('especialidade_tipoagenda as et', 'a.Especialidad_id', 'et.id')
+                                 ->join('especialidades as e', 'et.Especialidad_id', 'e.id')
+                                 ->join('tipo_agendas as ta', 'et.Tipoagenda_id', 'ta.id')
+                                 ->join('consultorios as c', 'a.Consultorio_id', 'c.id')
+                                 ->join('sedes as s', 'c.Sede_id', 's.id')
                                  ->join('agendausers as au', 'au.Agenda_id', 'a.id')
-                                 ->join('users as u','au.Medico_id','u.id')
-                                 ->whereIn('citas.Estado_id', [3,4,5,7])
+                                 ->join('users as u', 'au.Medico_id', 'u.id')
+                                 ->join('estados as es', 'cp.Estado_id', 'es.id')
+                                 ->whereIn('citas.Estado_id', [3,4,5,7,8,9,12])
+                                 ->whereIn('cp.Estado_id', [3,4,5,7,8,9,12])
                                  ->where('a.Fecha', date('Y-m-d'))
-                                 ->where('u.id',auth()->id())
+                                 ->where('u.id', auth()->id())
                                  ->get();
-         return response()->json($citaspendientes,200);
+        return response()->json($citaspendientes, 200);
     }
 
-     //Inicio de Historia CLINICA listos y probados en POSMAN
-    public function datospaciente(citapaciente $citapaciente){
-        
-         $datospaciente = citapaciente::select('Pacientes.*')
+    //Inicio de Historia CLINICA listos y probados en POSMAN
+    public function datospaciente(citapaciente $citapaciente)
+    {
+        $datospaciente = citapaciente::select('Pacientes.*')
                                 ->join('Pacientes', 'cita_paciente.Paciente_id', 'Pacientes.id')
                                 // ->join('Pacienteantecedentes', 'cita_paciente.citapaciente_id', 'Pacienteantecedentes.citapaciente_id')
-                                ->where('Pacientes.id',$citapaciente->Paciente_id)
+                                ->where('Pacientes.id', $citapaciente->Paciente_id)
                                 ->first();
-                                return response()->json($datospaciente, 200);
+        return response()->json($datospaciente, 200);
     }
 
-    public function editarpaciente(Request $request, Paciente $paciente, citapaciente $citapaciente){
-        if(!$this->isOpenCita($citapaciente->Estado_id)){
+    public function editarpaciente(Request $request, Paciente $paciente, citapaciente $citapaciente)
+    {
+        if (!$this->isOpenCita($citapaciente->Estado_id)) {
             return response()->json([
                 'message' => '¡La historia del paciente no se encuentra activa!'
             ], 422);
         }
 
-        $validate = Validator::make($request->all(),[
+        $validate = Validator::make($request->all(), [
             'Edad_Cumplida' => 'required',
             'Etnia' => 'required',
             'Laboraen' => 'required',
@@ -384,7 +398,8 @@ class CitaController extends Controller
         return response()->json(['message' => 'Datos del paciente actualizados con exito!'], 201);
     }
 
-    public function atender(Request $request, citapaciente $citapaciente ){
+    public function atender(Request $request, citapaciente $citapaciente)
+    {
         $citapaciente->update(["Estado_id" => 8]);
 
         $Nompaciente = citapaciente::select('Pacientes.Primer_Nom')
@@ -394,15 +409,48 @@ class CitaController extends Controller
         return response()->json(['message' => 'Inicia consulta con el paciente'. ' ' . $Nompaciente->Primer_Nom], 200);
     }
 
-    public function motivo(Request $request, citapaciente $citapaciente){
-         
-        if(!$this->isOpenCita($citapaciente->Estado_id)){
+    public function setTime(Request $request, citapaciente $citapaciente)
+    {
+        if ($request->type == 'Ingreso') {
+            $date = date("Y-m-d H:i:s");
+            $citapaciente->update(["Datetimeingreso" => $date]);
+        } elseif ($request->type == 'Salida') {
+            $date = date("Y-m-d H:i:s");
+            $citapaciente->update(["Datetimesalida" => $date]);
+        }
+        return response()->json([
+            'message' => 'Fecha actualizada de manera exitosa!'
+        ], 200);
+    }
+
+    public function getTimeIngreso(Request $request, citapaciente $citapaciente)
+    {
+        $Datetimesalida = citapaciente::select('Datetimeingreso')
+            ->where('id', $citapaciente->id)
+            ->first();
+
+        return response()->json($Datetimesalida, 200);
+    }
+
+    public function setTimeIngreso(Request $request, citapaciente $citapaciente)
+    {
+        $date = date("Y-m-d H:i:s");
+        $citapaciente->update(["Datetimeingreso" => $date]);
+
+        return response()->json([
+            'message' => 'Fecha actualizada de manera exitosa!'
+        ], 200);
+    }
+
+    public function motivo(Request $request, citapaciente $citapaciente)
+    {
+        if (!$this->isOpenCita($citapaciente->Estado_id)) {
             return response()->json([
                 'message' => '¡La historia del paciente no se encuentra activa!'
             ], 422);
         }
 
-        $validate = Validator::make($request->all(),[
+        $validate = Validator::make($request->all(), [
             'Motivoconsulta' => 'required|string|min:5',
             'Enfermedadactual' => 'required|string|min:20',
         ]);
@@ -411,8 +459,7 @@ class CitaController extends Controller
             return response()->json($errores, 422);
         }
 
-         $citapaciente->update([
-            'Tipocita_id' => $request->Tipocita_id,
+        $citapaciente->update([
             'Motivoconsulta' => $request->Motivoconsulta,
             'Enfermedadactual' => $request->Enfermedadactual,
             'Resultayudadiagnostica' => $request->Resultayudadiagnostica,
@@ -421,9 +468,10 @@ class CitaController extends Controller
         return response()->json(['message' => '!MC y EA guardado con exito!'], 201);
     }
 
-    public function revisionsistema(Request $request, citapaciente $citapaciente){
+    public function revisionsistema(Request $request, citapaciente $citapaciente)
+    {
         //  return $request->Oftalmologico;
-        if(!$this->isOpenCita($citapaciente->Estado_id)){
+        if (!$this->isOpenCita($citapaciente->Estado_id)) {
             return response()->json([
                 'message' => '¡La historia del paciente no se encuentra activa!'
             ], 422);
@@ -451,21 +499,181 @@ class CitaController extends Controller
         ], 201);
     }
 
-    public function anamnesis(citapaciente $citapaciente){
-
-        $citapaciente = citapaciente::select('Motivoconsulta', 'Enfermedadactual', 'Resultayudadiagnostica', 'Oftalmologico',
-                                                'Genitourinario','Otorrinoralingologico', 'Linfatico', 'Osteomioarticular', 'Neurologico',
-                                                'Cardiovascular', 'Tegumentario', 'Respiratorio', 'Endocrinologico', 'Gastrointestinal', 'Norefiere'
-                                            )
+    public function anamnesis(citapaciente $citapaciente)
+    {
+        $citapaciente = citapaciente::select(
+            'Motivoconsulta',
+            'Enfermedadactual',
+            'Resultayudadiagnostica',
+            'Oftalmologico',
+            'Genitourinario',
+            'Otorrinoralingologico',
+            'Linfatico',
+            'Osteomioarticular',
+            'Neurologico',
+            'Cardiovascular',
+            'Tegumentario',
+            'Respiratorio',
+            'Endocrinologico',
+            'Gastrointestinal',
+            'Norefiere'
+        )
                                         ->where('id', $citapaciente->id)
                                         ->first();
         return response()->json($citapaciente, 200);
     }
 
-    private function isOpenCita($estado){
+    private function isOpenCita($estado)
+    {
         if ($estado == 8) {
             return true;
         }
         return false;
+    }
+
+    public function update_state_consulta(citapaciente $citapaciente)
+    {
+        $citapaciente->update([
+            'Estado_id' => 8
+        ]);
+
+        Detallecita::create([
+            "Citapaciente_id" => $citapaciente->id,
+            "Usuario_id" => auth()->id(),
+            "Estado_id" => 8
+        ]);
+
+        return response()->json([
+            'message' => 'Estado actualizado de manera exitosa!'
+        ], 200);
+    }
+
+    public function inasistio(Cita $cita, Request $request)
+    {
+        $cita->update(["Estado_id" => 12]);
+
+        $cita_paciente = citapaciente::where('Cita_id', $cita->id)
+                            ->where('id', $request->cita_paciente_id)
+                            ->first();
+
+        $cita_paciente->update([
+            'Estado_id' => 12
+        ]);
+
+        Detallecita::create([
+            "Citapaciente_id" => $cita_paciente->id,
+            "Usuario_id" => auth()->id(),
+            "Motivo" => "Paciente no asiste a cita programada!",
+            "Estado_id" => 12
+        ]);
+        return response()->json([
+            'message' => 'Cita cancelada por inasistencia del paciente!'
+        ], 200);
+    }
+
+    public function update_state_atendida(citapaciente $citapaciente)
+    {
+        $flag = 0;
+        
+        $citapaciente->update([
+            'Estado_id' => 9
+        ]);
+
+        Detallecita::create([
+            "Citapaciente_id" => $citapaciente->id,
+            "Usuario_id" => auth()->id(),
+            "Estado_id" => 9
+        ]);
+
+        if (isset($citapaciente->Cita_id)) {
+            $cita = Cita::select('citas.*')
+                    ->where('citas.id', $citapaciente->Cita_id)
+                    ->first();
+
+            $citapacientes = citapaciente::select('cita_paciente.*')
+                                ->where('cita_paciente.Cita_id', $citapaciente->Cita_id)
+                                ->whereIn('cita_paciente.Estado_id', [4,8,9])
+                                ->get();
+
+            if (count($citapacientes) == 1) {
+                $cita->update([
+                'Estado_id' => 9
+            ]);
+            } elseif (count($citapacientes) > 1) {
+                foreach ($citapacientes as $valor) {
+                    if ($valor.Estado_id != 9) {
+                        $flag = 1;
+                    };
+                };
+
+                if ($flag == 0) {
+                    $cita->update([
+                        'Estado_id' => 9
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Estado actualizado de manera exitosa!'
+        ], 200);
+    }
+
+    public function create_cita_paciente(Request $request, Paciente $paciente)
+    {
+
+        ($request->medicoordeno) ? $medico = $request->medicoordeno 
+        : $medico = auth()->user()->name. ' ' .auth()->user()->apellido;
+
+        $cita_paciente = citapaciente::create([
+            "Medicoordeno" => $medico,
+            "Entidademite" => $request->entidademite,
+            "Finalidad" => $request->Finalidad,
+            "Observaciones" => $request->observaciones,
+            "Paciente_id" => $paciente->id,
+            "Usuario_id" => auth()->id(),
+            "Tipocita_id" => $request->Tipocita_id,
+        ]);
+
+        if (isset($cita_paciente)) {
+            Detallecita::create([
+                "Citapaciente_id" => $cita_paciente->id,
+                "Usuario_id" => auth()->id(),
+                "Motivo" => $request->Finalidad,
+                "Estado_id" => 6
+            ]);
+        }
+
+        return response()->json($cita_paciente, 200);
+    }
+
+    public function notProgramed() 
+    {
+        $date = date('Y-m-d');
+
+        $notProgramed = citapaciente::select(['p.id as paciente_id', 'cita_paciente.id as cita_paciente_id', 'cita_paciente.created_at as Fecha', 'cita_paciente.Estado_id as CP_Estado_id', 'p.Primer_Nom','p.SegundoNom','p.Primer_Ape','p.Segundo_Ape','p.Tipo_Doc','p.Num_Doc','p.Edad_Cumplida','es.Nombre as Estado'])
+                                 ->join('pacientes as p', 'cita_paciente.Paciente_id', 'p.id')
+                                 ->join('estados as es', 'cita_paciente.Estado_id', 'es.id')
+                                 ->join('users as u', 'cita_paciente.Usuario_id', 'u.id')
+                                 ->whereIn('cita_paciente.Estado_id', [3,4,5,7,8,9,12])
+                                 ->where('cita_paciente.created_at', '>=', $date)
+                                 ->where('cita_paciente.Tipocita_id', 2)
+                                 ->where('u.id', auth()->id())
+                                 ->get();
+
+        $rolesUser = auth()->user()->getRoleNames()->toArray();
+
+        $activities = Especialidade::select(['tp.id', 'tp.name'])
+                                ->join('especialidade_tipoagenda as et', 'especialidades.id', 'et.Especialidad_id')
+                                ->join('tipo_agendas as tp', 'et.Tipoagenda_id', 'tp.id')
+                                ->whereIn('especialidades.Nombre', $rolesUser)
+                                ->get();
+
+        
+
+        return response()->json([
+            'notProgramed' => $notProgramed,
+            'activities' => $activities,
+        ], 200);
     }
 }

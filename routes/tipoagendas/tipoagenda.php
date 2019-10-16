@@ -2,7 +2,7 @@
 
 Route::group(['prefix' => 'tipoagenda'], function () {
     
-    Route::group(['middleware' => 'auth:api'], function() {
+    Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
         Route::post('create',   'Agendas\TipoagendaController@store');
         Route::get('all',         'Agendas\TipoagendaController@all');                   
         Route::get('enabled',  'Agendas\TipoagendaController@enabled');                   

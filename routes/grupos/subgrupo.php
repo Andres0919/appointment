@@ -2,7 +2,7 @@
 
 Route::group(['prefix' => 'subgrupo'], function () {
     
-    Route::group(['middleware' => 'auth:api'], function() {
+    Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
         Route::post('all',         'Grupos\SubgrupoController@all');
         Route::get('enabled',         'Grupos\SubgrupoController@enabled');
         Route::post('create',   'Grupos\SubgrupoController@store');                  

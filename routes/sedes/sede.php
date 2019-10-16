@@ -1,7 +1,7 @@
 <?php
 
 Route::group(['prefix' => 'sede'], function () {
-	Route::group(['middleware' => 'auth:api'], function() {
+	Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
 		Route::post('create',   'Sedes\SedeController@store');
         Route::get('all',         'Sedes\SedeController@all');                   
         Route::get('enabled',         'Sedes\SedeController@enabled');                   

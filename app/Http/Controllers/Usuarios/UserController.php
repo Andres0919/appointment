@@ -66,6 +66,24 @@ class UserController extends Controller
         ], 200);
     }
 
+    public function updatefirma(Request $request, User $user )
+    {
+        if ($file = $request->file('file')) {
+            $name = $file->getClientOriginalName();
+        $pathdb = '/storage/app/public/firmas/'.$user->cedula.'/'.$name;
+        $path = '../storage/app/public/firmas/'.$user->cedula;
+        if ($file->move(public_path($path), $name)) {
+            $user->update([
+                'Firma' => $pathdb,
+            ]);
+            return response()->json([
+                'message' => 'Usuario Actualizado con Exito!'
+            ], 200);
+        }
+        }
+        
+    }
+
     public function updatepass(Request $request, User $user)
     {
       

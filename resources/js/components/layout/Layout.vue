@@ -88,6 +88,8 @@
                     { title: 'Inicio', icon: 'home', ruta: '/' },
                     { title: 'Módulo Agenda', icon: 'event_note', ruta: '/agenda' },
                     { title: 'Módulo Citas', icon: 'event', ruta: '/citas' },
+                    { title: 'Módulo Medico', icon: 'mdi-stethoscope', ruta: '/medico', can: 'panel-medico.enter' },
+                    { title: 'Módulo Auditoria', icon: 'mdi-comment-check', ruta: '/auditoria', can: 'auditoria.enter' },
                     { title: 'Módulo Administración', icon: 'settings', ruta: '/admin/users' },
                 ],
                 drawer: {

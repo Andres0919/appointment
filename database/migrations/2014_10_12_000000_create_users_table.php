@@ -28,6 +28,7 @@ class CreateUsersTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('avatar')->default('avatar.png');
+            $table->string('Registromedico')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -28,6 +28,105 @@ const home = {
             ]
         },
         {
+            path: '/auditoria',
+            component: () =>
+                import('./../../views/modules/auditoria/AuditoriaLayout.vue'),
+            name: 'auditoria',
+            children: [{
+                path: '/auditoria/home',
+                component: () =>
+                    // import('./../../views/modules/auditoria/Auditoria.vue')
+                    import('./../../views/modules/auditoria/AuditoriaMedicamento.vue')
+            }, 
+            {
+                path: '/auditoria/service',
+                component: () =>
+                    // import('./../../views/modules/auditoria/AuditoriaService.vue')
+                    import('./../../views/modules/auditoria/AuditoriaServicio.vue')
+            }, 
+            {
+                path: '/auditoria/historico',
+                component: () =>
+                    import('./../../views/modules/auditoria/Historico.vue')
+            }, 
+            {
+                path: '/auditoria/incapacidad',
+                component: () =>
+                    import('./../../views/modules/auditoria/Incapacidades.vue')
+            }]
+        },
+        {
+            path: '/medico',
+            component: () =>
+                import('./../../views/modules/medico/MedicoLayout.vue'),
+            name: 'medico',
+            children: [{
+                path: '/',
+                component: () =>
+                    import('./../../views/modules/medico/Medico.vue')
+            }, ]
+        },
+        {
+            path: '/historiaclinica',
+            component: () =>
+                import('./../../views/modules/medico/HistoriaClinicaLayout.vue'),
+            name: 'historiaclinica',
+            children: [{
+                    path: '/',
+                    component: () =>
+                        import('./../../views/modules/medico/HistoriaClinica.vue'),
+                    children: [
+                        {
+                            path: '/historiaclinica/motivoconsulta',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/MotivoConsulta.vue')
+                        },
+                        {
+                            path: '/historiaclinica/gineco',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/Gineco.vue')
+                        },
+                        {
+                            path: '/historiaclinica/stylelive',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/Stylelife.vue')
+                        },
+                        {
+                            path: '/historiaclinica/patologias',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/Patologias.vue')
+                        },
+                        {
+                            path: '/historiaclinica/examensistema',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/ExamenSistema.vue')
+                        },
+                        {
+                            path: '/historiaclinica/diagnostico',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/Diagnostico.vue')
+                        },
+                        {
+                            path: '/historiaclinica/conducta',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/Conducta.vue')
+                        },
+                        {
+                            path: '/historiaclinica/rcvm',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/rcvm.vue')
+                        },
+                        {
+                            path: '/historiaclinica/imagenologia',
+                            component: () =>
+                                import('./../../views/modules/historiaclinica/Imagenologia.vue')
+                        },
+                    ]
+                },
+
+            ]
+        },
+        {
             path:'/admin',
             component: () => import('./../../views/modules/admin/Admin.vue'),
             name:'admin',

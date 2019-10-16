@@ -1,10 +1,12 @@
 <?php
 
 Route::group(['prefix' => 'agenda'], function () {
-	Route::group(['middleware' => 'auth:api'], function() {
+	Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
 		Route::post('create',   'Agendas\AgendaController@store');
         Route::get('all',         'Agendas\AgendaController@all');
-        Route::get('agendaDisponible',  'Agendas\AgendaController@agendaDisponible');
+        Route::post('agendaDisponible',  'Agendas\AgendaController@agendaDisponible');
+        Route::get('agendaDisponible/especialidades',  'Agendas\AgendaController@agendaEspecialidad');
+        Route::post('agendaDisponible/sedes',  'Agendas\AgendaController@agendaSede');
         Route::get('enabled',        'Agendas\AgendaController@enabled');
         Route::put('edit/{agenda}', 'Agendas\AgendaController@update');
         Route::put('cancelar/{agenda}', 'Agendas\AgendaController@cancelarAgenda');

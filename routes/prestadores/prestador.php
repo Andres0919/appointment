@@ -1,9 +1,9 @@
 <?php
 
 Route::group(['prefix' => 'prestador'], function () {
-	Route::group(['middleware' => 'auth:api'], function() {
+	Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
         Route::get('all',         'Tarifarios\PrestadorController@all');
-        Route::get('prestadoresmedicamentos',         'Tarifarios\PrestadorController@prestadoresmedicamentos');
+        Route::get('prestadoresmedicamentos',  'Tarifarios\PrestadorController@prestadoresmedicamentos');
 		Route::post('create',   'Tarifarios\PrestadorController@store');
         Route::get('prestadores',         'Tarifarios\PrestadorController@prestadores');
         Route::put('edit/{prestadore}', 'Tarifarios\PrestadorController@update');

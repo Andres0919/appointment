@@ -2,7 +2,7 @@
 
 Route::group(['prefix' => 'tipobodega'], function () {
     
-    Route::group(['middleware' => 'auth:api'], function() {
+    Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
         Route::get('all',         'Bodegas\TipobodegaController@all');                   
         Route::post('create',   'Bodegas\TipobodegaController@store');                  
         Route::put('edit/{tipobodega}', 'Bodegas\TipobodegaController@update');

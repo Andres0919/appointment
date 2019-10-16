@@ -2,7 +2,7 @@
 
 Route::group(['prefix' => 'especialidad'], function () {
     
-    Route::group(['middleware' => 'auth:api'], function() {
+    Route::group(['middleware' => 'auth:api', 'throttle:60,1'], function() {
         Route::post('create',   'Especialidades\EspecialidadeController@store');
         Route::get('all',         'Especialidades\EspecialidadeController@all');                   
         Route::put('edit/{especialidade}', 'Especialidades\EspecialidadeController@update');
